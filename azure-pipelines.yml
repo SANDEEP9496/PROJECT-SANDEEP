@@ -1,24 +1,138 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-
 trigger:
-  - main
+- main
 
-pool:
-  vmImage: 'ubuntu-latest'
+resources:
+- repo: self
 
-steps:
-  - task: UseDotNet@2
-    inputs:
-      packageType: 'sdk'
-      version: '5.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '89ddaa35-5393-491b-bfbe-a0b50ced4087'
+  imageRepository: 'sandeepmanuflaskapp'
+  containerRegistry: 'myacrregistry08121996.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+  imagePullSecret: 'myacrregistry081219962113ad0a-auth'
 
-  - script: dotnet build --configuration Release
-    displayName: 'Build project'
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
 
-  - script: dotnet test --no-build --verbosity normal
-    displayName: 'Run tests'
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+    - upload: manifests
+      artifact: manifests
+
+- stage: DeployToDevelopment
+  displayName: Deploy to Development
+  dependsOn: Build
+  jobs:
+  - deployment: DeployDev
+    displayName: Deploy to Development
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Development'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: createSecret
+              secretName: $(imagePullSecret)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+          
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes Development
+            inputs:
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment-development.yml
+                $(Pipeline.Workspace)/manifests/service-development.yml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+              kubernetesServiceConnection: 'AKSserviceconnection'
+
+- stage: DeployToStaging
+  displayName: Deploy to Staging
+  dependsOn: Build
+  jobs:
+  - deployment: DeployStaging
+    displayName: Deploy to Staging
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Staging'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: createSecret
+              secretName: $(imagePullSecret)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+          
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes Staging
+            inputs:
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment-staging.yml
+                $(Pipeline.Workspace)/manifests/service-staging.yml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+              kubernetesServiceConnection: 'AKSserviceconnection'
+
+- stage: DeployToProduction
+  displayName: Deploy to Production
+  dependsOn: Build
+  jobs:
+  - deployment: DeployProd
+    displayName: Deploy to Production
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: createSecret
+              secretName: $(imagePullSecret)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+          
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes Production
+            inputs:
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment-production.yml
+                $(Pipeline.Workspace)/manifests/service-production.yml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+              kubernetesServiceConnection: 'AKSserviceconnection'
