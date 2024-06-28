@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: sandeepprojectsandeep 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandeepprojectsandeep
+  template:
+    metadata:
+      labels:
+        app: sandeepprojectsandeep 
+    spec:
+      containers:
+        - name: sandeepprojectsandeep 
+          image: myacrregistry08121996.azurecr.io/sandeepprojectsandeep
+          ports:
+          - containerPort: 5000
