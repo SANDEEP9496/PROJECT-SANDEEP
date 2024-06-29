@@ -12,7 +12,7 @@ variables:
 
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '84d5a046-ea0d-4488-a2a4-7ff4b283b3d5'
-  imageRepository: 'sandeepprojectsandeep'
+  imageRepository: 'sandeepmanu/flask-app'
   containerRegistry: 'myacrregistry08121996.azurecr.io'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
