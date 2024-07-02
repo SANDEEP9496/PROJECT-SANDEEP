@@ -8,9 +8,9 @@ pool:
 
 variables:
   # Set the Docker registry service connection
-  DOCKER_REGISTRY_SERVICE_CONNECTION: 'Dockerconnectionname'
+  DOCKER_REGISTRY_SERVICE_CONNECTION: 'sandeepconnection-new'
   # Image name
-  IMAGE_NAME: 'flask-app'
+  IMAGE_NAME: 'sandeepapp'
 
 stages:
   - stage: Build
