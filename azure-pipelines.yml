@@ -22,8 +22,8 @@ stages:
          
             - task: Docker@2
               inputs:
-                containerRegistry: 'Dockerconnectionname'
-                repository: 'sandeepmanu/flask-app'
+                containerRegistry: 'sandeepconnection-new'
+                repository: 'sandeep1208/sandeepapp'
                 command: 'buildAndPush'
                 Dockerfile: '**/Dockerfile'
               
