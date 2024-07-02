@@ -10,7 +10,7 @@ variables:
   # Set the Docker registry service connection
   DOCKER_REGISTRY_SERVICE_CONNECTION: 'sandeepconnection-new'
   # Image name
-  IMAGE_NAME: 'sandeepapp'
+  IMAGE_NAME: 'sandeep1208/sandeepapp'
 
 stages:
   - stage: Build
